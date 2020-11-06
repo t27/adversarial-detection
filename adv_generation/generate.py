@@ -1,4 +1,5 @@
 """ CIFAR10 Adversarial Example Generation"""
+
 import os
 
 import torch
@@ -34,9 +35,7 @@ def main():
     # for eps in epsilons:
     #     generate(eps, model)
     generate(0.15, model)
-    print("Generated examples.")
-
-
+    
 
 def generate(epsilon=0.0, model=None, args=None):
     """Run one training session with a particular set of hyperparameters."""
@@ -47,13 +46,12 @@ def generate(epsilon=0.0, model=None, args=None):
 
     dataloaders, idx_to_class = get_loader(args)
 
-    counter = np.zeros(10)
-
     model.to(device)
     model.eval()
 
     running_corrects = 0.0
     adv_corrects = 0.0
+    counter = np.zeros(10)
 
     phase = "train"
     # Iterate over data.
@@ -80,7 +78,7 @@ def generate(epsilon=0.0, model=None, args=None):
         adv_outputs = model(perturbed_data)
         _, adv_preds = torch.max(adv_outputs, 1) 
 
-        save_images(perturbed_data, labels, idx_to_class, counter)
+        save_images(perturbed_data, labels, preds, adv_preds, idx_to_class, counter)
 
         # statistics
         rc = torch.sum(preds == labels.data)
@@ -89,42 +87,39 @@ def generate(epsilon=0.0, model=None, args=None):
         #adversarial statistics
         arc = torch.sum(adv_preds == labels.data)
         adv_corrects += arc.item() / preds.shape[0]
-        
 
-        
     original_acc = running_corrects /len(dataloaders[phase])
     adversarial_acc = adv_corrects /len(dataloaders[phase])
-
 
     print('Original Accuracy: {:.4f} \t Adversarial Accuracy: {:.4f}'.format(original_acc, adversarial_acc))
 
 
-
-#TODO: Save only intentionally misclassified images
-def save_images(images, labels, idx_to_class, counter):
+def save_images(images, labels, orig_pred, adv_pred, idx_to_class, counter):
     """Take in tensor of images"""
     invTrans = transforms.Compose([transforms.Normalize(mean = [ 0., 0., 0. ],
-                                                     std = [ 1/0.247, 1/0.243, 1/0.261 ]),
+                                            std = [ 1/0.247, 1/0.243, 1/0.261 ]),
                                 transforms.Normalize(mean = [-0.4914, -0.4822, -0.4465],
-                                                     std = [ 1., 1., 1. ]),
+                                            std = [ 1., 1., 1. ]),
                                ])
     
     for i in range(images.shape[0]):
-        image = images[i]
-        image = invTrans(image)
-        image = image.cpu().detach().numpy()
-        image = np.transpose(image, (1, 2, 0))
-        image = np.clip(image, 0, 1)
-        
-        plt.imshow(image)
-        
-        name = str(int(counter[labels[i].item()]))
-        name = name.zfill(4) + ".png"
-        save_dir = ADV_DIR + idx_to_class[labels[i].item()] + "/" + name
-        
+        # number corresponds to original label
         counter[labels[i].item()] += 1
-        
-        plt.imsave(save_dir, image)
+        # saved only intentionally misclassified examples
+        if orig_pred[i] == labels[i] and adv_pred[i] != labels[i]:
+            image = invTrans(images[i])
+            image = image.cpu().detach().numpy()
+            image = np.transpose(image, (1, 2, 0))
+            image = np.clip(image, 0, 1)
+            
+            name = str(int(counter[labels[i].item()]))
+            name = name.zfill(4) + ".png"
+            save_dir = ADV_DIR + idx_to_class[labels[i].item()] + "/" + name
+
+            plt.imshow(image)
+            plt.imsave(save_dir, image)
+        else:
+            continue
 
 
 def fgsm_attack(image, epsilon, data_grad):
@@ -142,7 +137,6 @@ def fgsm_attack(image, epsilon, data_grad):
 
 def get_loader(args):
     """Return Image Loaders as a Dictionary."""
-    
     size = SIZE
 
     resize  = transforms.Resize(size=int(SIZE*1.25), interpolation=2)
@@ -167,10 +161,9 @@ def get_loader(args):
     class_to_idx = image_datasets["train"].class_to_idx
     idx_to_class = {v: k for k, v in class_to_idx.items()}
 
-    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=args.batch_size, shuffle=True, num_workers=4) for x in ['train', 'test']}
+    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=args.batch_size, shuffle=False, num_workers=4) for x in ['train', 'test']}
     
     return dataloaders, idx_to_class
-
 
 
 if __name__ == "__main__":
