@@ -2,16 +2,11 @@
 11-785 Deep Learning Project (F20)
 
 
-## Setup and Usage
+# Adversarial Data Generation
 
-- Use Conda and Python3.6+ (3.8 Recommended)
-- use `requirements.txt` to install the dependencies
-
-
-This Repo implements the baseline from [On Detecting Adversarial Perturbations](https://arxiv.org/abs/1702.04267) - Jan Hendrik Metzen, Tim Genewein, Volker Fischer, Bastian Bischoff
+In the `adv_generation` folder
 
 
-BaseModel
+# Adversarial Detector
 
-
-
+This implements the baseline from [On Detecting Adversarial Perturbations](https://arxiv.org/abs/1702.04267) - Jan Hendrik Metzen, Tim Genewein, Volker Fischer, Bastian Bischoff
