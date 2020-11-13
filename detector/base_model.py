@@ -116,6 +116,7 @@ class BaseModel(nn.Module):
 if __name__ == "__main__":
     model = BaseModel()
     im = torch.ones((1, 3, 32, 32))
+    breakpoint()
     model(im)
     # # or
     # outval, l1,l2 = model(img,True)

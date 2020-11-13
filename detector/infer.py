@@ -1,7 +1,3 @@
-# 2 training loops
-
-# BaseModel and AD model
-
 import torch
 import torch.nn as nn
 import base_model
@@ -11,6 +7,7 @@ import torchvision.datasets
 import torchvision.transforms as transforms
 from tqdm import tqdm
 import numpy as np
+import os
 
 params = {}
 
@@ -18,13 +15,10 @@ params["round_name"] = "round0"
 params["batch_size"] = 128  # 256 * 3
 params["epochs"] = 80
 
+ADV_DATA_PATH = "../adv_generation/baseline_adv/"
 
-def main():
-    BATCH_SIZE = params["batch_size"]
-    num_epochs = params["epochs"]
 
-    logging.info("Loading datasets...")
-
+def get_cifar_loader(BATCH_SIZE=64):
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     )
@@ -42,6 +36,37 @@ def main():
     dev_loader = torch.utils.data.DataLoader(
         dev_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=6
     )
+    return train_loader, dev_loader
+
+
+def adv_loader(BATCH_SIZE=64):
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    )
+    dev_dataset = torchvision.datasets.ImageFolder(
+        os.path.join(ADV_DATA_PATH, "dev"), transform
+    )
+    train_dataset = torchvision.datasets.ImageFolder(
+        os.path.join(ADV_DATA_PATH, "train"), transform
+    )
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=6
+    )  # remember to disable shuffle as we are storing data for other models to use
+    dev_loader = torch.utils.data.DataLoader(
+        dev_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=6
+    )
+    return train_loader, dev_loader
+
+
+def main():
+    BATCH_SIZE = params["batch_size"]
+    num_epochs = params["epochs"]
+
+    logging.info("Loading datasets...")
+
+    # train_loader, dev_loader = get_cifar_loader()
+
+    train_loader, dev_loader = adv_loader()
 
     model = nn.DataParallel(base_model.BaseModel(num_classes=10))
 

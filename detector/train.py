@@ -1,7 +1,3 @@
-# 2 training loops
-
-# BaseModel and AD model
-
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
