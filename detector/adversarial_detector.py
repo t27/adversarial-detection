@@ -14,14 +14,14 @@ import wandb
 logging.basicConfig(level=logging.INFO)
 
 USE_WANDB = True
-adv_net_level = 1
+adv_net_level = 4
 if USE_WANDB:
     wandb.init(project=f"IDL_proj_adv_net_{adv_net_level}")
     params = wandb.config
 else:
     params = {}
 
-params["adv_net_level"] = 1
+params["adv_net_level"] = adv_net_level
 params["round_name"] = "round0"
 params["batch_size"] = 256
 params["lr"] = 0.001
@@ -213,11 +213,14 @@ def train_and_evaluate_model(
     optimizer = optim.Adam(model.parameters(), lr)
     if torch.cuda.is_available():
         model = model.cuda()
+    wandb.watch(model, log="all")
     for epoch in range(num_epochs):
         train(train_loader, model, criterion, optimizer, epoch)
         evaluate(dev_loader, model, criterion, optimizer, epoch)
         if epoch % 2 == 0:
             torch.save(model.state_dict(), f"adv_det_level{level}_epoch_{epoch}.pth")
+            wandb.save(f"adv_det_level{level}_epoch_{epoch}.pth")
+
     torch.save(model.state_dict(), f"adv_det_level{level}_epoch_{epoch}.pth")
     wandb.save(f"adv_det_level{level}_epoch_{epoch}.pth")
 
