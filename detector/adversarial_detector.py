@@ -8,27 +8,11 @@ import torch.optim as optim
 from sklearn.metrics import accuracy_score
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
-import wandb
 
+# import wandb
+import base_model
 
 logging.basicConfig(level=logging.INFO)
-
-USE_WANDB = True
-adv_net_level = 4
-if USE_WANDB:
-    wandb.init(project=f"IDL_proj_adv_net_{adv_net_level}")
-    params = wandb.config
-else:
-    params = {}
-
-params["adv_net_level"] = adv_net_level
-params["round_name"] = "round0"
-params["batch_size"] = 256
-params["lr"] = 0.001
-params["momentum"] = 0.9
-params["epochs"] = 80
-params["sched_step_every_n_epochs"] = 2
-params["sched_mult_lr_by_gamma_everystep"] = 0.85
 
 
 class AdvDetector(nn.Module):
@@ -225,7 +209,44 @@ def train_and_evaluate_model(
     wandb.save(f"adv_det_level{level}_epoch_{epoch}.pth")
 
 
+def get_trained_model(level):
+    level_config_map = {
+        1: {"in_channels": 16, "pool1": False, "pool2": False, "epoch": 2},
+        2: {"in_channels": 16, "pool1": False, "pool2": False, "epoch": 2},
+        3: {"in_channels": 32, "pool1": False, "pool2": False, "epoch": 4},
+        4: {"in_channels": 64, "pool1": False, "pool2": False, "epoch": 20},
+    }
+    if level not in level_config_map:
+        raise Exception(
+            f"Invalid Level number {level}, must be one of {list(level_config_map.keys())}"
+        )
+    else:
+        in_channels = level_config_map[level]["in_channels"]
+        pool1 = level_config_map[level]["pool1"]
+        pool2 = level_config_map[level]["pool2"]
+        model = AdvDetector(in_channels, pooling1=pool1, pooling2=pool2)
+        epoch = level_config_map[level]["epoch"]
+        model.load_state_dict(torch.load(f"adv_det_level{level}_epoch_{epoch}.pth"))
+        return model
+
+
 if __name__ == "__main__":
+    USE_WANDB = True
+    adv_net_level = 4
+    if USE_WANDB:
+        wandb.init(project=f"IDL_proj_adv_net_{adv_net_level}")
+        params = wandb.config
+    else:
+        params = {}
+
+    params["adv_net_level"] = adv_net_level
+    params["round_name"] = "round0"
+    params["batch_size"] = 256
+    params["lr"] = 0.001
+    params["momentum"] = 0.9
+    params["epochs"] = 80
+    params["sched_step_every_n_epochs"] = 2
+    params["sched_mult_lr_by_gamma_everystep"] = 0.85
 
     train_and_evaluate_model(
         f"./data/real/c{adv_net_level}s_train.npy",

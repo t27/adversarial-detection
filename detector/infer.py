@@ -138,6 +138,13 @@ def run_model(data_loader, model, layer_outputs=True):
     targets = torch.cat(targets, dim=0).numpy()
     return outputs, c1s, c2s, c3s, c4s, targets
 
+def get_base_model():
+    model = nn.DataParallel(base_model.BaseModel(num_classes=10))
+    if torch.cuda.is_available():
+        model = model.cuda()
+    MODEL_FILE = "./savedmodels/epoch_56.pth"
+    model.load_state_dict(torch.load(MODEL_FILE))
+    return model
 
 if __name__ == "__main__":
 
