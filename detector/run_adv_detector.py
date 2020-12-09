@@ -26,9 +26,8 @@ def image_base64(im):
         return base64.b64encode(buffer.getvalue()).decode()
 
 
-def run():
-    # dataloader = adv_dev_loader
-    dataloader = real_dev_loader
+def run(dataloader, tag):
+
     basemodel = infer.get_base_model()
     basemodel.eval()
     if torch.cuda.is_available():
@@ -70,8 +69,11 @@ def run():
             )
     print("Generating and Saving Dataframe")
     df = pd.DataFrame(results, columns=results_names)
-    df.to_csv("dev_real_dataset_results.csv", index=False)
+    df.to_csv(f"dev_{tag}_dataset_results.csv", index=False)
 
 
 if __name__ == "__main__":
-    run()
+    dataloaders = [(real_dev_loader, "real"), (adv_dev_loader, "adv")]
+
+    for dataloader, tag in dataloaders:
+        run(dataloader, tag)

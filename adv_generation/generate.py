@@ -14,13 +14,13 @@ import numpy as np
 import wandb
 
 from tqdm import tqdm
-from utils import parse_args
+# from utils import parse_args
 
 import _init_paths
 from detector import base_model
 
 DATA_DIR = "../detector/data"
-ADV_DIR = "./baseline_adv/"
+ADV_DIR = "./baseline_adv2/"
 MODEL_PATH = "../detector/savedmodels/epoch_56.pth"
 SIZE = 32
 
