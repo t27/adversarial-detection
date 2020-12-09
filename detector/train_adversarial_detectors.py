@@ -202,11 +202,16 @@ def train_and_evaluate_model(
         train(train_loader, model, criterion, optimizer, epoch)
         evaluate(dev_loader, model, criterion, optimizer, epoch)
         if epoch % 2 == 0:
-            torch.save(model.state_dict(), f"adv_det_level{level}_epoch_{epoch}.pth")
-            wandb.save(f"adv_det_level{level}_epoch_{epoch}.pth")
+            torch.save(
+                model.state_dict(),
+                f"checkpoints/adv_det_level{level}_epoch_{epoch}.pth",
+            )
+            wandb.save(f"checkpoints/adv_det_level{level}_epoch_{epoch}.pth")
 
-    torch.save(model.state_dict(), f"adv_det_level{level}_epoch_{epoch}.pth")
-    wandb.save(f"adv_det_level{level}_epoch_{epoch}.pth")
+    torch.save(
+        model.state_dict(), f"checkpoints/adv_det_level{level}_epoch_{epoch}.pth"
+    )
+    wandb.save(f"checkpoints/adv_det_level{level}_epoch_{epoch}.pth")
 
 
 def get_trained_model(level):
@@ -226,7 +231,9 @@ def get_trained_model(level):
         pool2 = level_config_map[level]["pool2"]
         model = AdvDetector(in_channels, pooling1=pool1, pooling2=pool2)
         epoch = level_config_map[level]["epoch"]
-        model.load_state_dict(torch.load(f"adv_det_level{level}_epoch_{epoch}.pth"))
+        model.load_state_dict(
+            torch.load(f"checkpoints/adv_det_level{level}_epoch_{epoch}.pth")
+        )
         return model
 
 

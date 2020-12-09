@@ -7,7 +7,7 @@ import pandas as pd
 from io import BytesIO
 import base64
 import infer
-import adversarial_detector
+import train_adversarial_detectors
 from tqdm import tqdm
 
 to_pil = ToPILImage()
@@ -34,7 +34,7 @@ def run(dataloader, tag):
         basemodel = basemodel.cuda()
     adv_models = []
     for i in range(4):
-        model = adversarial_detector.get_trained_model(i + 1)
+        model = train_adversarial_detectors.get_trained_model(i + 1)
         model.eval()
         if torch.cuda.is_available():
             model = model.cuda()
